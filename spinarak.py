@@ -71,7 +71,7 @@ def create_booking(day_of_month, num_of_guests, location):
     '''
 
     if location == "Tokyo":
-        website = "https://reserve.pokemon-cafe.jp/"
+        website = "https://reserve.pokemon-cafe.jp/reserve/step1"
     elif location == "Osaka":
         website = "https://osaka.pokemon-cafe.jp/"
 
