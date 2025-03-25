@@ -2,11 +2,12 @@ name: Spinarak bot
 
 on:
   schedule:
-  # Parte 1: 08:00–23:59 BRT → 11:00–23:59 UTC (mesmos dias)
-  - cron: '*/15 11-23 23-29 4 *'
-  # Parte 2: 00:00–01:30 UTC (corresponde a 21:00–22:30 BRT do dia anterior)
-  - cron: '*/15 0-1 24-30 4 *'
-
+    # 08:00–20:45 BRT (11–23 UTC)
+    - cron: '*/30 11-23 25-31 3 *'
+    - cron: '*/30 11-23 1-15 4 *'
+    # 21:00–22:30 BRT (00–01 UTC next day)
+    - cron: '*/30 0-1 26-31 3 *'
+    - cron: '*/30 0-1 2-16 4 *'
   workflow_dispatch:
 
 jobs:
