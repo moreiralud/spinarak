@@ -1,7 +1,12 @@
+name: Enviar E-mail
+
+on:
+  workflow_dispatch:  # permite disparo manual pelo botão “Run workflow”
+
 jobs:
   send_email:
     runs-on: ubuntu-latest
-    environment: spinarak     # <–– aqui você associa o job ao Environment que contém seus secrets
+    environment: spinarak
 
     env:
       GMAIL_SENDER:    ${{ secrets.GMAIL_SENDER }}
@@ -9,8 +14,7 @@ jobs:
       GMAIL_APP_PW:    ${{ secrets.GMAIL_APP_PW }}
 
     steps:
-      - name: Checar o código
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
       - name: Verificar variáveis de ambiente
         run: |
