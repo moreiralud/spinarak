@@ -1,3 +1,8 @@
+name: Enviar E-mail
+
+on:
+  workflow_dispatch:  # Isso permite que você acione o workflow manualmente na interface do GitHub
+
 jobs:
   send_email:
     runs-on: ubuntu-latest
