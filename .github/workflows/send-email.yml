@@ -24,7 +24,7 @@ jobs:
 
     - name: Enviar Email de Teste
       run: |
-        python seu_script_de_envio_de_email.py  # Substitua pelo caminho correto para o seu script
+        python send_email.py # Substitua pelo caminho correto para o seu script
       env:
         GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}
         GMAIL_APP_PW: ${{ secrets.GMAIL_APP_PW }}
