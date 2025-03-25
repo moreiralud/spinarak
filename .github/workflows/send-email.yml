@@ -1,16 +1,12 @@
-name: Enviar E-mail
-
-on:
-  workflow_dispatch:  # Isso permite que você acione o workflow manualmente na interface do GitHub
-
 jobs:
   send_email:
     runs-on: ubuntu-latest
+    environment: spinarak     # <–– aqui você associa o job ao Environment que contém seus secrets
 
     env:
-      GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}
+      GMAIL_SENDER:    ${{ secrets.GMAIL_SENDER }}
       GMAIL_RECIPIENT: ${{ secrets.GMAIL_RECIPIENT }}
-      GMAIL_APP_PW: ${{ secrets.GMAIL_APP_PW }}
+      GMAIL_APP_PW:    ${{ secrets.GMAIL_APP_PW }}
 
     steps:
       - name: Checar o código
@@ -18,9 +14,9 @@ jobs:
 
       - name: Verificar variáveis de ambiente
         run: |
-          echo "Sender: $GMAIL_SENDER"
-          echo "Recipient: $GMAIL_RECIPIENT"
-          echo "App Password: $GMAIL_APP_PW"
+          echo "Sender set? $( [ -z \"$GMAIL_SENDER\" ] && echo no || echo yes )"
+          echo "Recipient set? $( [ -z \"$GMAIL_RECIPIENT\" ] && echo no || echo yes )"
+          echo "App Password set? $( [ -z \"$GMAIL_APP_PW\" ] && echo no || echo yes )"
 
       - name: Instalar dependências
         run: |
