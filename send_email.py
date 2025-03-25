@@ -4,9 +4,9 @@ from email.mime.multipart import MIMEMultipart
 import os
 
 def send_email():
-    sender_email = os.getenv("SENDER_EMAIL")
-    receiver_email = os.getenv("RECEIVER_EMAIL")
-    password = os.getenv("EMAIL_PASSWORD")
+    sender_email = os.getenv("GMAIL_SENDER")
+    receiver_email = os.getenv("GMAIL_RECIPIENT")
+    password = os.getenv("GMAIL_APP_PW")
 
     msg = MIMEMultipart()
     msg['From'] = sender_email
