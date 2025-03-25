@@ -1,8 +1,3 @@
-name: Teste de Envio de E-mail
-
-on:
-  workflow_dispatch:  # Permite rodar o workflow manualmente
-
 jobs:
   send_email:
     runs-on: ubuntu-latest
@@ -11,10 +6,16 @@ jobs:
       GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}
       GMAIL_RECIPIENT: ${{ secrets.GMAIL_RECIPIENT }}
       GMAIL_APP_PW: ${{ secrets.GMAIL_APP_PW }}
-    
+
     steps:
       - name: Checar o código
         uses: actions/checkout@v2
+
+      - name: Verificar variáveis de ambiente
+        run: |
+          echo "Sender: $GMAIL_SENDER"
+          echo "Recipient: $GMAIL_RECIPIENT"
+          echo "App Password: $GMAIL_APP_PW"
 
       - name: Instalar dependências
         run: |

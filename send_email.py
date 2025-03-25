@@ -8,7 +8,11 @@ def send_email():
     receiver_email = os.getenv("GMAIL_RECIPIENT")
     password = os.getenv("GMAIL_APP_PW")
 
-    # Verificando se as variáveis de ambiente estão corretas
+    # Adicionando prints para depurar as variáveis
+    print(f"Sender Email: {sender_email}")
+    print(f"Receiver Email: {receiver_email}")
+    print(f"Password: {password}")
+
     if not sender_email or not receiver_email or not password:
         print("Erro: Verifique se as variáveis de ambiente estão configuradas corretamente.")
         return
@@ -18,22 +22,18 @@ def send_email():
     msg['To'] = receiver_email
     msg['Subject'] = 'GitHub Actions - Teste de Envio de E-mail'
 
-    body = "O workflow do GitHub Actions foi executado com sucesso!"
+    body = f"O workflow do GitHub Actions foi executado com sucesso!"
     msg.attach(MIMEText(body, 'plain'))
 
     try:
-        # Conectando ao servidor SMTP do Gmail
         with smtplib.SMTP('smtp.gmail.com', 587) as server:
             server.starttls()
-            server.login(sender_email, password)  # Autenticando
+            server.login(sender_email, password)
             text = msg.as_string()
-            server.sendmail(sender_email, receiver_email, text)  # Enviando o e-mail
+            server.sendmail(sender_email, receiver_email, text)
             print("E-mail enviado com sucesso!")
-
-    except smtplib.SMTPAuthenticationError as auth_error:
-        print(f"Erro de autenticação: {auth_error}")  # Erro de autenticação
     except Exception as e:
-        print(f"Erro ao enviar e-mail: {str(e)}")  # Qualquer outro erro
+        print(f"Erro ao enviar e-mail: {e}")
 
 if __name__ == "__main__":
     send_email()
