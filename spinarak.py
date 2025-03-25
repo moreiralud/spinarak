@@ -21,7 +21,7 @@ password = os.environ['GMAIL_APP_PW'] # https://myaccount.google.com/apppassword
 
 num_iterations = 10
 day_of_month='28'
-num_of_guests=3
+num_of_guests=2
 location = 'Tokyo'
 #location = 'Osaka'
 
