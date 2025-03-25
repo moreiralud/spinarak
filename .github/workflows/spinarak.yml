@@ -7,41 +7,42 @@ on:
 
 jobs:
   run-spinarak:
+    environment: spinarak      # ← necessário para carregar os Environment Secrets
     permissions:
       contents: write
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      
-    - name: Install dependencies
-      run: |
-        # font package needed for Japanese to render in captured screenshots
-        sudo apt-get install fonts-noto-cjk
-        pip install chromedriver-autoinstaller selenium pyvirtualdisplay beautifulsoup4
-        
-    - name: Run Python Selenium script
-      env:
-        GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}
-        GMAIL_APP_PW: ${{ secrets.GMAIL_APP_PW }}
-        GMAIL_RECIPIENT: ${{ secrets.GMAIL_RECIPIENT }}
-        GMAIL_RECIPIENT_2: ${{ secrets.GMAIL_RECIPIENT_two }}
-      run: |
-          echo -e "current NAT'd source IP address: `curl -s api.ipify.org`\n\n"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk
+          pip install chromedriver-autoinstaller selenium pyvirtualdisplay beautifulsoup4
+
+      - name: Run Python Selenium script
+        env:
+          GMAIL_SENDER:      ${{ secrets.GMAIL_SENDER }}
+          GMAIL_APP_PW:      ${{ secrets.GMAIL_APP_PW }}
+          GMAIL_RECIPIENT:   ${{ secrets.GMAIL_RECIPIENT }}
+          GMAIL_RECIPIENT_two: ${{ secrets.GMAIL_RECIPIENT_two }}
+        run: |
+          echo -e "current NAT'd source IP address: $(curl -s api.ipify.org)\n"
           python spinarak.py
           ls -al
-          
-    - name: Check if there are any changes
-      id: verify_diff
-      run: |
+
+      - name: Check if there are any changes
+        id: verify_diff
+        run: |
           git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
-          
-    - name: Commit & push screenshot to repo
-      if: steps.verify_diff.outputs.changed == 'true'
-      run: |
-          git config --global user.name '${{github.actor}}'
-          git config --global user.email '${{github.actor}}@users.noreply.github.com'
-          git add --all
-          git commit -am "Screenshot(s)"
-          #git pull
+
+      - name: Commit & push screenshot to repo
+        if: steps.verify_diff.outputs.changed == 'true'
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git add .
+          git commit -m "Add screenshot"
           git push --force
