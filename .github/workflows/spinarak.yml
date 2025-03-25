@@ -27,7 +27,7 @@ jobs:
         GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}
         GMAIL_APP_PW: ${{ secrets.GMAIL_APP_PW }}
         GMAIL_RECIPIENT: ${{ secrets.GMAIL_RECIPIENT }}
-        GMAIL_RECIPIENT_2: ${{ secrets.GMAIL_RECIPIENT_2 }}
+        GMAIL_RECIPIENT_2: ${{ secrets.GMAIL_RECIPIENT_two }}
       run: |
           echo -e "current NAT'd source IP address: `curl -s api.ipify.org`\n\n"
           python spinarak.py

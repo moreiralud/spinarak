@@ -14,7 +14,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 sender_email = os.environ['GMAIL_SENDER']
 receiver_email = os.environ['GMAIL_RECIPIENT']
 # in case you want to send to another email
-receiver_email2 = os.environ['GMAIL_RECIPIENT_2']
+receiver_email2 = os.environ['GMAIL_RECIPIENT_two']
 recipients = [os.environ['GMAIL_SENDER'], os.environ['GMAIL_RECIPIENT']]
 # password of the sender email
 password = os.environ['GMAIL_APP_PW'] # https://myaccount.google.com/apppasswords
