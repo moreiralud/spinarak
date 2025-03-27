@@ -1,35 +1,25 @@
-import chromedriver_autoinstaller, os, uuid, random, smtplib, time, base64, requests, json
+import chromedriver_autoinstaller, os, uuid, smtplib, time, base64, requests, json
 from datetime import date
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from email.mime.text import MIMEText
-from pyvirtualdisplay import Display
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.action_chains import ActionChains
-
 from dotenv import load_dotenv
+
 load_dotenv()
 
-
-# Define your email settings as repo secrets
 sender_email = os.environ['GMAIL_SENDER']
 receiver_email = os.environ['GMAIL_RECIPIENT']
 receiver_email2 = os.environ['GMAIL_RECIPIENT_two']
-recipients = [os.environ['GMAIL_SENDER'], os.environ['GMAIL_RECIPIENT']]
 password = os.environ['GMAIL_APP_PW']
-
-# Capsolver API key
 CAPSOLVER_API_KEY = os.environ.get("CAPSOLVER_API_KEY")
 
-num_iterations = 10
-day_of_month = '28'
+num_iterations = 1
 num_of_guests = 2
 location = 'Tokyo'
 
-magic_cell = ''
 
 def solve_captcha_with_capsolver(site_url):
     print("Solicitando resolução de CAPTCHA com CapSolver...")
@@ -38,48 +28,48 @@ def solve_captcha_with_capsolver(site_url):
     payload = {
         "clientKey": CAPSOLVER_API_KEY,
         "task": {
-            "type": "AntiAwsWafTask",
+            "type": "AntiAwsWafTaskProxyLess",
             "websiteURL": site_url
         }
     }
+    try:
+        response = requests.post(url, headers=headers, data=json.dumps(payload)).json()
+        if "errorCode" in response:
+            print(f"Erro ao criar tarefa no CapSolver: {response}")
+            return None
 
-    response = requests.post(url, headers=headers, data=json.dumps(payload)).json()
-    task_id = response.get("taskId")
+        task_id = response.get("taskId")
+        print(f"Tarefa criada com sucesso. ID: {task_id}")
 
-    if not task_id:
-        print("Erro ao criar tarefa no CapSolver:", response)
+        result_url = "https://api.capsolver.com/getTaskResult"
+        for attempt in range(30):
+            print(f"Tentativa {attempt + 1}/30 para obter resultado...")
+            time.sleep(5)
+            result = requests.post(result_url, headers=headers, data=json.dumps({
+                "clientKey": CAPSOLVER_API_KEY,
+                "taskId": task_id
+            })).json()
+
+            if result.get("status") == "ready":
+                print("CAPTCHA resolvido com sucesso.")
+                return result["solution"]
+
+        print("Tempo limite atingido para resolução do CAPTCHA.")
         return None
 
-    print("Tarefa criada com sucesso. ID:", task_id)
+    except Exception as e:
+        print(f"Erro ao comunicar com CapSolver: {e}")
+        return None
 
-    result_url = "https://api.capsolver.com/getTaskResult"
-    for _ in range(30):
-        time.sleep(5)
-        res = requests.post(result_url, headers=headers, data=json.dumps({
-            "clientKey": CAPSOLVER_API_KEY,
-            "taskId": task_id
-        })).json()
-
-        if res.get("status") == "ready":
-            print("CAPTCHA resolvido com sucesso!")
-            return res["solution"]
-
-        print("Aguardando resolução do CAPTCHA...")
-
-    print("Tempo limite atingido para resolução do CAPTCHA.")
-    return None
 
 def send_email(avail_slots, filename):
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
         server.login(sender_email, password)
-        subject = "\U0001F6A8 Available days found by Spinarak bot: "
-        for day in avail_slots:
-            subject += day + ' '
-        body = "Go check now!<br><br><a href ='https://reserve.pokemon-cafe.jp/reserve/step1'>reserve.pokemon-cafe.jp/reserve/step1</a><br><br>Available days:<br><br>"
-        for day in avail_slots:
-            body += day + '<br>'
+        subject = "Available days found by Spinarak bot: " + ' '.join(avail_slots)
+        body = "Go check now!<br><br><a href='https://reserve.pokemon-cafe.jp/reserve/step1'>reserve.pokemon-cafe.jp</a><br><br>Available days:<br><br>"
+        body += '<br>'.join(avail_slots)
         with open(filename, 'rb') as image_file:
             encoded_string = base64.b64encode(image_file.read())
         body += '<br><img src="data:image/png;base64,' + encoded_string.decode() + '">'        
@@ -89,12 +79,13 @@ def send_email(avail_slots, filename):
         message['To'] = receiver_email
         server.sendmail(sender_email, [receiver_email], message.as_string())
         server.sendmail(sender_email, [receiver_email2], message.as_string())
-        print("Email sent!")
+        print("Email enviado com sucesso!")
         server.quit()
     except Exception as e:
-        print(f"Email error: {str(e)}")
+        print(f"Erro ao enviar email: {e}")
 
-def create_booking(day_of_month, num_of_guests, location):
+
+def create_booking(num_of_guests, location):
     if location == "Tokyo":
         website = "https://reserve.pokemon-cafe.jp/reserve/step1"
     elif location == "Osaka":
@@ -104,71 +95,73 @@ def create_booking(day_of_month, num_of_guests, location):
     chrome_options.add_argument("--window-size=1200,1200")
     chrome_options.add_argument("--ignore-certificate-errors")
     chrome_options.add_argument("--start-maximized")
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
 
     driver = webdriver.Chrome(options=chrome_options)
     print("Navegador iniciado.")
 
-    # Resolver CAPTCHA com CapSolver e adicionar cookie
-    captcha_solution = solve_captcha_with_capsolver(website)
-    if captcha_solution and "cookie" in captcha_solution:
-        print("Injetando cookie de verificação no navegador...")
-        driver.get("https://reserve.pokemon-cafe.jp/")
-        driver.add_cookie({
-            'name': captcha_solution['cookie']['name'],
-            'value': captcha_solution['cookie']['value'],
-            'domain': captcha_solution['cookie']['domain'],
-            'path': '/',
-            'secure': True
-        })
-
     driver.get(website)
+    time.sleep(2)
+
+    if "Human Verification" in driver.title or "captcha" in driver.page_source.lower():
+        print("CAPTCHA detectado. Iniciando resolução com CapSolver...")
+        captcha_solution = solve_captcha_with_capsolver(website)
+        if captcha_solution and "cookie" in captcha_solution:
+            print("Injetando cookie de verificação no navegador...")
+            driver.get("https://reserve.pokemon-cafe.jp/")
+            cookie_raw = captcha_solution["cookie"]
+            if ":" in cookie_raw:
+                name, value = cookie_raw.split(":", 1)
+                driver.add_cookie({
+                    'name': name,
+                    'value': value,
+                    'domain': "reserve.pokemon-cafe.jp",
+                    'path': '/',
+                    'secure': True
+                })
+                print(f"Cookie injetado: name={name}, value={value[:10]}...")
+            driver.get(website)
+            time.sleep(2)
+        else:
+            print("Não foi possível resolver o CAPTCHA.")
+            driver.quit()
+            return
+
     print("Acessando a página de reservas...")
 
     try:
-        driver.find_element(By.XPATH, "//*[@id=\"forms-agree\"]/div/div[1]/label").click()
-        driver.find_element(By.XPATH, "//*[@id=\"forms-agree\"]/div/div[2]/button").click()
-        time.sleep(random.randint(3, 6))
-        driver.find_element(By.XPATH, "/html/body/div/div/div[2]/div/div/a").click()
-        time.sleep(random.randint(3, 6))
         select = Select(driver.find_element(By.NAME, 'guest'))
-        time.sleep(random.randint(2, 3))
+        time.sleep(2)
         select.select_by_index(num_of_guests)
+        time.sleep(2)
 
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        calendar_cells = soup.find_all("li")
+        # Clica no "Next Month"
+        try:
+            next_month_btn = driver.find_element(By.XPATH, "//a[contains(text(), '次の月を見る')]")
+            next_month_btn.click()
+            print("Clicou em 'Next Month'")
+            time.sleep(3)
+        except Exception as e:
+            print("Erro ao clicar em 'Next Month':", e)
 
-        available = False
-        available_slots = []
-        global magic_cell
-        for cell in calendar_cells:
-            if "(full)" not in cell.text.lower() and "n/a" not in cell.text.lower():
-                available_slots.append(cell.text.strip())
-                available = True
-                magic_cell = cell.text
+        # Verifica se há dias disponíveis (sem a classe 'not-available')
+        available_days = driver.find_elements(By.CSS_SELECTOR, ".calendar-day-cell:not(.not-available)")
+        if available_days:
+            print(f"Encontrou {len(available_days)} dia(s) disponível(is)!")
+            available_slots = [day.text.strip() for day in available_days if day.text.strip()]
 
-        driver.execute_script('document.getElementsByTagName("html")[0].style.scrollBehavior = "auto"')
-        element = driver.find_element(By.XPATH, "/html/body/div/div/div[2]/div/div[1]/p[3]")
-        element.location_once_scrolled_into_view
-
-        if available:
-            print('Slot(s) AVAILABLE:')
-            for day in available_slots:
-                print(day + ' ')
             filename = 'hits/pokemon-cafe-slot-found-' + date.today().strftime("%Y%m%d") + '-' + str(uuid.uuid4().hex) + '.png'
             driver.save_screenshot(filename)
+            print(f"Screenshot salva em: {filename}")
             send_email(available_slots, filename)
         else:
-            print("No available slots found :(")
+            print("Nenhum dia disponível encontrado.")
 
         driver.quit()
     except NoSuchElementException:
         print("Elemento esperado não encontrado na página.")
         driver.quit()
 
-# Iniciar sessão virtual (caso necessário em ambientes headless)
-display = Display(visible=0, size=(800, 800))
-display.start()
-chromedriver_autoinstaller.install()
 
-[create_booking(day_of_month, num_of_guests, location) for x in range(num_iterations)]
+chromedriver_autoinstaller.install()
+[create_booking(num_of_guests, location) for _ in range(num_iterations)]
