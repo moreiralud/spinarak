@@ -10,6 +10,10 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 
+from dotenv import load_dotenv
+load_dotenv()
+
+
 # Define your email settings as repo secrets
 sender_email = os.environ['GMAIL_SENDER']
 receiver_email = os.environ['GMAIL_RECIPIENT']
